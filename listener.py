@@ -7,7 +7,6 @@ import whisper
 import os
 import threading
 from speaker import ensure_queue_empty
-from chat_api import buffer_completed
 from collections import deque
 
 SAMPLE_RATE = 16000
@@ -24,7 +23,6 @@ MAX_SILENT_SECONDS = 1.5
 
 def listen_until_keypress():
     print("Waiting for all previous audio to be executed.")
-    buffer_completed()
     ensure_queue_empty()
     print("Ready to record")
 
@@ -61,7 +59,7 @@ def listen_until_keypress():
 
     stop_event.clear()
 
-    stream = sd.InputStream(samplerate=SAMPLE_RATE, blocksize=BLOCK_SIZE, channels=1, callback=callback)
+    stream = sd.InputStream(samplerate=SAMPLE_RATE, channels=1, callback=callback)
     with stream:
         stop_event.wait()
 

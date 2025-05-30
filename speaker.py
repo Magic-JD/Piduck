@@ -7,11 +7,21 @@ import os
 
 tts_engine = TTS(model_name="tts_models/en/ljspeech/vits", progress_bar=False, gpu=False)
 
+text_queue = Queue()
 audio_queue = Queue()
 
 
 def ensure_queue_empty():
+    text_queue.join()
     audio_queue.join()
+
+def tts_worker():
+    while True:
+        text = text_queue.get()
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+            tts_engine.tts_to_file(text=text, file_path=f.name)
+            audio_queue.put(f.name)
+        text_queue.task_done()
 
 
 def playback_worker():
@@ -29,12 +39,8 @@ def playback_worker():
 
 # Start the playback thread
 threading.Thread(target=playback_worker, daemon=True).start()
+threading.Thread(target=tts_worker, daemon=True).start()
 
 # Main interface to queue up speech
 def speak(text):
-    def tts_worker():
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            tts_engine.tts_to_file(text=text, file_path=f.name)
-            audio_queue.put(f.name)
-
-    threading.Thread(target=tts_worker, daemon=True).start()
+    text_queue.put(text)

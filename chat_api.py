@@ -2,17 +2,9 @@ import requests
 import json
 import re
 from speaker import speak
-from threading import Event
-
-buffer_done = Event()
-buffer_done.set()
-
-def buffer_completed():
-    buffer_done.wait()
 
 
 def stream_chat(user_input):
-    buffer_done.clear()
     payload = {
         "model": "deepseek-llm:7b",
         "stream": True,
@@ -62,4 +54,3 @@ def stream_chat(user_input):
 
             except json.JSONDecodeError:
                 continue
-    buffer_done.set()
