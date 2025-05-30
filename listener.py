@@ -38,7 +38,6 @@ def listen_until_keypress():
     def callback(indata, frames, time_info, status):
         nonlocal silent_duration, last_audio_time, speaking
         volume_norm = np.linalg.norm(indata) / len(indata)
-        ensure_queue_empty()
         now = time.time()
         if volume_norm < SILENCE_THRESHOLD and speaking:
             silent_duration += now - last_audio_time
