@@ -20,18 +20,18 @@ This creates a natural, reflective debugging process — entirely via voice.
 
 ## Features
 
-    Fully voice-driven interaction.
+- Fully voice-driven interaction.
 
-    Strictly Socratic responses from the LLM (no direct answers or advice).
+- Strictly Socratic responses from the LLM (no direct answers or advice).
 
-    Local LLM querying via Ollama (required).
+- Local LLM querying via Ollama (required).
 
-    Configurable model backend (tested with DeepSeek).
+- Configurable model backend (tested with DeepSeek).
 
-    Prototype implementation with modular structure for extension.
+- Prototype implementation with modular structure for extension.
 
 ## Requirements
 
-    Python 3.10+
+- Python 3.10+
 
-    A running instance of Ollama on localhost:11434.
+- A running instance of Ollama on localhost:11434.
