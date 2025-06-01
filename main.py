@@ -1,9 +1,11 @@
 from listener import VoiceListener
-from chat_api import stream_chat
+from chat_api import ChatStreamer
+from speaker import Speaker
 
 
 def main() -> None:
     voice_listener = VoiceListener()
+    chat_streamer = ChatStreamer(speaker_instance=Speaker())
     quitwords = {"exit", "quit", "terminate"}
     while True:
         print("\nTell me all about your problems. Say 'exit' to quit.")
@@ -12,7 +14,7 @@ def main() -> None:
         if user_input.strip().lower() in quitwords:
             break
         if user_input:
-            stream_chat(user_input)
+            chat_streamer.stream_chat(user_input)
 
 
 if __name__ == "__main__":

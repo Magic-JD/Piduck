@@ -1,46 +1,49 @@
-from queue import Queue
-from TTS.api import TTS
+import simpleaudio as sa
 import tempfile
 import threading
-import simpleaudio as sa
-import os
-
-tts_engine = TTS(model_name="tts_models/en/ljspeech/vits", progress_bar=False, gpu=False)
-
-text_queue = Queue()
-audio_queue = Queue()
+from TTS.api import TTS
+from pathlib import Path
+from queue import Queue
 
 
-def ensure_queue_empty():
-    text_queue.join()
-    audio_queue.join()
+class Speaker:
+    def __init__(self, model_name="tts_models/en/ljspeech/vits", gpu=False):
+        self.tts_engine = TTS(model_name=model_name, progress_bar=False, gpu=gpu)
+        self.text_queue = Queue()
+        self.audio_queue = Queue()
+        self._stop_event = threading.Event()
 
-def tts_worker():
-    while True:
-        text = text_queue.get()
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            tts_engine.tts_to_file(text=text, file_path=f.name)
-            audio_queue.put(f.name)
-        text_queue.task_done()
+        self.tts_thread = threading.Thread(target=self._tts_worker, daemon=True)
+        self.playback_thread = threading.Thread(target=self._playback_worker, daemon=True)
 
+        self.tts_thread.start()
+        self.playback_thread.start()
 
-def playback_worker():
-    while True:
-        file_path = audio_queue.get()
-        if file_path is None:  # Sentinel value to stop thread
-            break
-        try:
-            wave_obj = sa.WaveObject.from_wave_file(file_path)
-            play_obj = wave_obj.play()
-            play_obj.wait_done()
-        finally:
-            os.unlink(file_path)  # Clean up
-            audio_queue.task_done()
+    def _tts_worker(self):
+        while not self._stop_event.is_set():
+            text = self.text_queue.get()
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                self.tts_engine.tts_to_file(text=text, file_path=f.name)
+                self.audio_queue.put(f.name)
+            self.text_queue.task_done()
 
-# Start the playback thread
-threading.Thread(target=playback_worker, daemon=True).start()
-threading.Thread(target=tts_worker, daemon=True).start()
+    def _playback_worker(self):
+        while not self._stop_event.is_set():
+            file_path = self.audio_queue.get()
+            try:
+                wave_obj = sa.WaveObject.from_wave_file(file_path)
+                play_obj = wave_obj.play()
+                play_obj.wait_done()
+            finally:
+                Path(file_path).unlink(missing_ok=True)
+                self.audio_queue.task_done()
 
-# Main interface to queue up speech
-def speak(text):
-    text_queue.put(text)
+    def speak(self, text: str):
+        if self._stop_event.is_set():
+            print("Warning: Speaker is shut down. Cannot queue new text.")
+            return
+        self.text_queue.put(text)
+
+    def ensure_queue_empty(self):
+        self.text_queue.join()
+        self.audio_queue.join()
