@@ -8,18 +8,19 @@ from pathlib import Path
 import threading
 from collections import deque
 from typing import List
+from speaker import Speaker
 
 
 class VoiceListener:
-    def __init__(self, model_name="base"):
+    def __init__(self, speaker: Speaker, model_name="base"):
         self.model = whisper.load_model(model_name)
         self.stop_event = threading.Event()
         self.sample_rate = 16000
+        self.speaker = speaker
 
     def listen(self) -> str:
-        from speaker import ensure_queue_empty
         print("Waiting for all previous audio to be executed.")
-        ensure_queue_empty()
+        self.speaker.ensure_queue_empty()
         print("Ready to record")
 
         recording = []

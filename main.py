@@ -4,8 +4,9 @@ from speaker import Speaker
 
 
 def main() -> None:
-    voice_listener = VoiceListener()
-    chat_streamer = ChatStreamer(speaker_instance=Speaker())
+    speaker = Speaker()
+    voice_listener = VoiceListener(speaker)
+    chat_streamer = ChatStreamer(speaker_instance=speaker)
     quitwords = {"exit", "quit", "terminate"}
     while True:
         print("\nTell me all about your problems. Say 'exit' to quit.")
